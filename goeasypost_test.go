@@ -5,47 +5,36 @@ import (
 	"os"
 	"flag"
 	"fmt"
-	"net/http"
-	"io/ioutil"
-	"log"
-	"encoding/json"
-	"github.com/mitymauser/goeasypost/models"
 )
 
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-	log.SetOutput(os.Stdout)
+	DisableLogger()
 	os.Exit(m.Run())
 }
 
 
-func TestHello(t *testing.T) {
+func TestInvalidCreateTracker(t *testing.T) {
 
-
-
-
-	req, err := http.NewRequest("GET", "https://api.easypost.com/v2/trackers", nil)
-	if(err!=nil) {
-		fmt.Println(err)
+	_, err := CreateTracker("EZ1000000001c", "USPS")
+	if (err == nil) {
+		t.Log(err)
+		t.Fail()
 	}
-	req.SetBasicAuth(ApiKey, "")
-	cli := &http.Client{}
-	resp, err := cli.Do(req)
-	defer resp.Body.Close()
-	if(err!=nil) {
-		fmt.Println(err)
+}
+
+
+func TestValidCreateTracker(t *testing.T) {
+
+	tracker, err := CreateTracker("EZ4000000004", "UPS")
+	if (err != nil) {
+		t.Log(err)
+		t.Fail()
 	}
-	body, err := ioutil.ReadAll(resp.Body)
-	log.Printf("RESPONSE CODE: %d\n",resp.StatusCode)
-	var errCheck models.TrackerList
-	err = json.Unmarshal(body, &errCheck)
-	if(err!=nil) {
-		fmt.Println(err)
+
+	if("delivered" != tracker.Status) {
+		t.Log(fmt.Sprintf("Expected status 'delivered', saw status %v",tracker.Status))
+		t.Fail()
 	}
-	fmt.Println(errCheck)
-	s := string(body[:])
-	j := "JSON"
-j += s
-	fmt.Println(j)
 }
