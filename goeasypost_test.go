@@ -1,11 +1,27 @@
+/*
+ * Copyright (c) 2016 Stewart Buskirk <mitymauser@gmail.com>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 package goeasypost
 
 import (
 	"flag"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
+//	"github.com/davecgh/go-spew/spew"
 	"os"
 	"testing"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func TestMain(m *testing.M) {
@@ -14,9 +30,11 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestListTrackers(t *testing.T) {
+func TestListAllTrackers(t *testing.T) {
 
-	_, err := GetTrackerList()
+	params := make(map[string]string)
+
+	_, err := GetTrackerList(params)
 	if err != nil {
 		t.Log(err)
 		t.Fail()
@@ -42,8 +60,8 @@ func TestValidCreateTracker(t *testing.T) {
 		t.Log(err)
 		t.Fail()
 	}
-	//	data, _ := json.MarshalIndent(tracker, "", "    ")
-	//	t.Log(string(data[:]))
+
+
 	if "delivered" != tracker.Status {
 		t.Log(fmt.Sprintf("Expected status 'delivered', saw status %v", tracker.Status))
 		t.Fail()
@@ -62,7 +80,6 @@ func TestFlattenStruct(t *testing.T) {
 	v.Delivery = vdelivery
 	vdelivery.Success = true
 
-
 	params := make(map[string]string)
 
 	err := flattenStructMap(a, "address", params)
@@ -71,11 +88,6 @@ func TestFlattenStruct(t *testing.T) {
 		t.Fail()
 	}
 
-	for k, v := range params {
-		fmt.Printf("%v=%v\n", k, v)
-	}
-
-	//t.Log(fmt.Sprintf("%v",params))
 }
 
 func TestNewAddress(t *testing.T) {
@@ -88,7 +100,7 @@ func TestNewAddress(t *testing.T) {
 	a.State = "WA"
 	a.Zip = "984"
 	a.Country = "US"
-	v := VerifyRequest{true,"delivery"}
+	v := VerifyRequest{true, "delivery"}
 	a.VerifyRequest = &v
 
 	newAddr, err := NewAddress(a)
@@ -97,7 +109,7 @@ func TestNewAddress(t *testing.T) {
 		t.Fail()
 	}
 
-	spew.Dump(newAddr)
+//	spew.Dump(newAddr)
 
 	retrievedAddr, err := RetrieveAddress(newAddr.Id)
 	if err != nil {
@@ -105,13 +117,12 @@ func TestNewAddress(t *testing.T) {
 		t.Fail()
 	}
 
-	if(retrievedAddr.Id != newAddr.Id) {
-		t.Log(fmt.Sprintf("Expected matching address ids, saw created id %v, retrieved id %v", newAddr.Id,retrievedAddr.Id))
+	if retrievedAddr.Id != newAddr.Id {
+		t.Log(fmt.Sprintf("Expected matching address ids, saw created id %v, retrieved id %v", newAddr.Id, retrievedAddr.Id))
 		t.Fail()
 	}
 
 }
-
 
 func TestNewParcel(t *testing.T) {
 	var a = new(Parcel)
@@ -122,26 +133,62 @@ func TestNewParcel(t *testing.T) {
 	a.Height = 6
 	a.Width = 6
 
-
 	newParcel, err := NewParcel(a)
 	if err != nil {
 		t.Log(fmt.Sprintf("Expected error value nil, saw error %v", err))
 		t.Fail()
 	}
 
-	spew.Dump(newParcel)
+	//spew.Dump(newParcel)
 
-	retrievedParcel, err := RetrieveParcel(newParcel.Id)
+	retrievedParcel, err := GetParcel(newParcel.Id)
 	if err != nil {
 		t.Log(fmt.Sprintf("Expected error value nil, saw error %v", err))
 		t.Fail()
 	}
 
-	if(retrievedParcel.Id != newParcel.Id) {
-		t.Log(fmt.Sprintf("Expected matching address ids, saw created id %v, retrieved id %v", newParcel.Id,retrievedParcel.Id))
+	if retrievedParcel.Id != newParcel.Id {
+		t.Log(fmt.Sprintf("Expected matching address ids, saw created id %v, retrieved id %v", newParcel.Id, retrievedParcel.Id))
 		t.Fail()
 	}
 
 }
 
+func TestNewShipment(t *testing.T) {
+	var s = new(Shipment)
+
+	var a = new(Address)
+
+	//a.Id="xxx"
+	a.Name = "Testing Tester"
+	a.Street1 = "18495 lakeview lane"
+	a.City = "Mount Vernon"
+	a.State = "WA"
+	a.Zip = "98274"
+	a.Country = "US"
+	v := VerifyRequest{true, "delivery"}
+	a.VerifyRequest = &v
+
+	var p = new(Parcel)
+
+	//a.Id="xxx"
+	p.Weight = 1.50
+	p.Length = 6
+	p.Height = 6
+	p.Width = 6
+
+
+	s.FromAddress = a
+	s.ToAddress = a
+	s.Parcel = *p
+
+	newShipment, err := NewShipment(s)
+	if err != nil {
+		t.Log(fmt.Sprintf("Expected error value nil, saw error %v", err))
+		t.Fail()
+	}
+
+spew.Dump(newShipment)
+
+}
 
